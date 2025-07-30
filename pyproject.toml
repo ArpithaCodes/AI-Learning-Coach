@@ -1,0 +1,11 @@
+[project]
+name = "ai-learning-coach"
+version = "1.0.0"
+description = "A personalized AI tutor covering all academic subjects with smart study tools"
+authors = ["Mulge Arpitha <mulgearpitha@gmail.com>"]
+requires-python = ">=3.11"
+
+dependencies = [
+    "openai>=1.0.0",
+    "streamlit>=1.25.0"
+]
