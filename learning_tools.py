@@ -1,9 +1,17 @@
+import streamlit as st
+import openai
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
 import json
-from typing import Dict, List, Optional
+import datetime
+from typing import List, Dict, Optional
+from collections import Counter
+
+
 
 class LearningTools:
     """Specialized tools for different academic subjects and learning tasks."""
-    
+
     def __init__(self, openai_client):
         self.client = openai_client
         self.tools = {
@@ -12,31 +20,32 @@ class LearningTools:
             "science_explainer": self._explain_science_concept,
             "coding_helper": self._help_with_coding,
             "formula_reference": self._provide_formula_reference,
-            
+
             # Language Tools
             "writing_assistant": self._assist_with_writing,
             "literature_analysis": self._analyze_literature,
             "language_practice": self._practice_language,
             "grammar_checker": self._check_grammar,
-            
+
             # Social Studies Tools
             "history_timeline": self._create_history_timeline,
             "geography_helper": self._help_with_geography,
             "economics_explainer": self._explain_economics,
             "political_analysis": self._analyze_politics,
-            
+
             # Arts Tools
             "music_theory": self._explain_music_theory,
             "art_analysis": self._analyze_artwork,
             "creative_writing": self._assist_creative_writing,
-            
+
             # Test Prep Tools
             "test_strategy": self._provide_test_strategy,
             "practice_problems": self._generate_practice_problems,
             "study_schedule": self._create_study_schedule,
         }
-    
-    def analyze_and_respond(self, query: str, profile: Dict, context: str) -> Optional[str]:
+
+    def analyze_and_respond(self, query: str, profile: Dict,
+                            context: str) -> Optional[str]:
         """Analyze query and determine if a specialized tool should be used."""
         try:
             # Determine which tool to use based on query content
@@ -63,30 +72,33 @@ class LearningTools:
             Only suggest a tool if the query clearly requires specialized functionality.
             Return null for general conversation or broad educational questions.
             """
-            
+
             response = self.client.chat.completions.create(
                 model="gpt-4o",
-                messages=[{"role": "user", "content": tool_prompt}],
+                messages=[{
+                    "role": "user",
+                    "content": tool_prompt
+                }],
                 response_format={"type": "json_object"},
-                max_tokens=200
-            )
-            
+                max_tokens=200)
+
             result = json.loads(response.choices[0].message.content)
             tool_name = result.get("tool")
-            
+
             if tool_name and tool_name in self.tools:
                 return self.tools[tool_name](query, profile, context)
-            
+
             return None
-            
+
         except Exception as e:
             # If tool analysis fails, return None to fall back to general response
             return None
-    
-    def _solve_math_problem(self, query: str, profile: Dict, context: str) -> str:
+
+    def _solve_math_problem(self, query: str, profile: Dict,
+                            context: str) -> str:
         """Solve mathematical problems with step-by-step explanations."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a mathematics tutor helping a {level} level student.
         
@@ -103,19 +115,23 @@ class LearningTools:
         Make explanations appropriate for {level} level understanding.
         Use clear mathematical notation and reasoning.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"🔢 **Math Problem Solver**\n\n{response.choices[0].message.content}"
-    
-    def _explain_science_concept(self, query: str, profile: Dict, context: str) -> str:
+
+    def _explain_science_concept(self, query: str, profile: Dict,
+                                 context: str) -> str:
         """Explain scientific concepts across physics, chemistry, and biology."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a science tutor explaining concepts to a {level} level student.
         
@@ -132,19 +148,23 @@ class LearningTools:
         
         Use language appropriate for {level} level and include practical examples.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"🔬 **Science Concept Explainer**\n\n{response.choices[0].message.content}"
-    
-    def _help_with_coding(self, query: str, profile: Dict, context: str) -> str:
+
+    def _help_with_coding(self, query: str, profile: Dict,
+                          context: str) -> str:
         """Assist with programming questions and coding problems."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a programming tutor helping a {level} level student with coding.
         
@@ -162,19 +182,23 @@ class LearningTools:
         Explain concepts clearly for {level} level programming understanding.
         Include comments in code examples.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"💻 **Coding Helper**\n\n{response.choices[0].message.content}"
-    
-    def _assist_with_writing(self, query: str, profile: Dict, context: str) -> str:
+
+    def _assist_with_writing(self, query: str, profile: Dict,
+                             context: str) -> str:
         """Help with writing assignments, essays, and composition."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a writing tutor helping a {level} level student improve their writing.
         
@@ -191,19 +215,23 @@ class LearningTools:
         
         Tailor advice to {level} level writing skills and academic expectations.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"✍️ **Writing Assistant**\n\n{response.choices[0].message.content}"
-    
-    def _analyze_literature(self, query: str, profile: Dict, context: str) -> str:
+
+    def _analyze_literature(self, query: str, profile: Dict,
+                            context: str) -> str:
         """Analyze literary works, themes, and literary devices."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a literature teacher helping a {level} level student analyze literary works.
         
@@ -220,19 +248,23 @@ class LearningTools:
         
         Make analysis accessible for {level} level literary understanding.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"📚 **Literature Analysis**\n\n{response.choices[0].message.content}"
-    
-    def _create_history_timeline(self, query: str, profile: Dict, context: str) -> str:
+
+    def _create_history_timeline(self, query: str, profile: Dict,
+                                 context: str) -> str:
         """Create historical timelines and explain historical events."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a history teacher helping a {level} level student understand historical events.
         
@@ -249,19 +281,23 @@ class LearningTools:
         
         Present information clearly for {level} level historical understanding.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"📜 **History Timeline & Analysis**\n\n{response.choices[0].message.content}"
-    
-    def _provide_test_strategy(self, query: str, profile: Dict, context: str) -> str:
+
+    def _provide_test_strategy(self, query: str, profile: Dict,
+                               context: str) -> str:
         """Provide test preparation strategies and exam tips."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a test prep specialist helping a {level} level student prepare for exams.
         
@@ -278,19 +314,23 @@ class LearningTools:
         
         Tailor advice to {level} level academic preparation needs.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"🎯 **Test Preparation Strategy**\n\n{response.choices[0].message.content}"
-    
-    def _generate_practice_problems(self, query: str, profile: Dict, context: str) -> str:
+
+    def _generate_practice_problems(self, query: str, profile: Dict,
+                                    context: str) -> str:
         """Generate practice problems and exercises."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are creating practice problems for a {level} level student.
         
@@ -306,16 +346,20 @@ class LearningTools:
         
         Make problems appropriate for {level} level and educational.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=800
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=800)
+
         return f"📝 **Practice Problems**\n\n{response.choices[0].message.content}"
-    
-    def _provide_formula_reference(self, query: str, profile: Dict, context: str) -> str:
+
+    def _provide_formula_reference(self, query: str, profile: Dict,
+                                   context: str) -> str:
         """Provide mathematical and scientific formula references."""
         prompt = f"""
         Provide a comprehensive formula reference for: {query}
@@ -330,19 +374,23 @@ class LearningTools:
         
         Make it a useful reference guide.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=600
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=600)
+
         return f"📐 **Formula Reference**\n\n{response.choices[0].message.content}"
-    
-    def _practice_language(self, query: str, profile: Dict, context: str) -> str:
+
+    def _practice_language(self, query: str, profile: Dict,
+                           context: str) -> str:
         """Help with foreign language practice and learning."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a language tutor helping a {level} level student with language learning.
         
@@ -359,15 +407,18 @@ class LearningTools:
         
         Adapt to {level} level language proficiency.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"🌍 **Language Practice**\n\n{response.choices[0].message.content}"
-    
+
     def _check_grammar(self, query: str, profile: Dict, context: str) -> str:
         """Check and explain grammar issues."""
         prompt = f"""
@@ -384,19 +435,23 @@ class LearningTools:
         
         Be constructive and educational in feedback.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=600
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=600)
+
         return f"✅ **Grammar Check**\n\n{response.choices[0].message.content}"
-    
-    def _help_with_geography(self, query: str, profile: Dict, context: str) -> str:
+
+    def _help_with_geography(self, query: str, profile: Dict,
+                             context: str) -> str:
         """Help with geography concepts and questions."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a geography teacher helping a {level} level student.
         
@@ -413,19 +468,23 @@ class LearningTools:
         
         Make explanations appropriate for {level} level geography understanding.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"🌍 **Geography Helper**\n\n{response.choices[0].message.content}"
-    
-    def _explain_economics(self, query: str, profile: Dict, context: str) -> str:
+
+    def _explain_economics(self, query: str, profile: Dict,
+                           context: str) -> str:
         """Explain economic concepts and principles."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are an economics teacher explaining concepts to a {level} level student.
         
@@ -442,19 +501,23 @@ class LearningTools:
         
         Use language appropriate for {level} level economics education.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"💰 **Economics Explainer**\n\n{response.choices[0].message.content}"
-    
-    def _analyze_politics(self, query: str, profile: Dict, context: str) -> str:
+
+    def _analyze_politics(self, query: str, profile: Dict,
+                          context: str) -> str:
         """Analyze political concepts and systems."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a political science teacher helping a {level} level student understand political concepts.
         
@@ -471,19 +534,23 @@ class LearningTools:
         
         Maintain objectivity and present multiple viewpoints for {level} level understanding.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"🏛️ **Political Analysis**\n\n{response.choices[0].message.content}"
-    
-    def _explain_music_theory(self, query: str, profile: Dict, context: str) -> str:
+
+    def _explain_music_theory(self, query: str, profile: Dict,
+                              context: str) -> str:
         """Explain music theory concepts."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a music theory instructor teaching a {level} level student.
         
@@ -500,19 +567,22 @@ class LearningTools:
         
         Make explanations accessible for {level} level music education.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"🎵 **Music Theory Guide**\n\n{response.choices[0].message.content}"
-    
+
     def _analyze_artwork(self, query: str, profile: Dict, context: str) -> str:
         """Analyze artworks and art history."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are an art history teacher helping a {level} level student analyze artwork.
         
@@ -529,19 +599,23 @@ class LearningTools:
         
         Make analysis engaging and educational for {level} level art appreciation.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"🎨 **Art Analysis**\n\n{response.choices[0].message.content}"
-    
-    def _assist_creative_writing(self, query: str, profile: Dict, context: str) -> str:
+
+    def _assist_creative_writing(self, query: str, profile: Dict,
+                                 context: str) -> str:
         """Assist with creative writing projects."""
         level = profile.get('learning_level', 'intermediate')
-        
+
         prompt = f"""
         You are a creative writing instructor helping a {level} level student with their creative work.
         
@@ -558,20 +632,24 @@ class LearningTools:
         
         Encourage creativity while providing practical writing advice for {level} level.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"🖋️ **Creative Writing Assistant**\n\n{response.choices[0].message.content}"
-    
-    def _create_study_schedule(self, query: str, profile: Dict, context: str) -> str:
+
+    def _create_study_schedule(self, query: str, profile: Dict,
+                               context: str) -> str:
         """Create personalized study schedules."""
         level = profile.get('learning_level', 'intermediate')
         subjects = profile.get('preferred_subjects', [])
-        
+
         prompt = f"""
         Create a detailed study schedule for a {level} level student.
         
@@ -589,11 +667,15 @@ class LearningTools:
         
         Make it practical and sustainable for consistent use.
         """
-        
-        response = self.client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=700
-        )
-        
+
+        response = self.client.chat.completions.create(model="gpt-4o",
+                                                       messages=[{
+                                                           "role":
+                                                           "user",
+                                                           "content":
+                                                           prompt
+                                                       }],
+                                                       max_tokens=700)
+
         return f"📅 **Study Schedule Planner**\n\n{response.choices[0].message.content}"
+    

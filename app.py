@@ -1,31 +1,12 @@
 import streamlit as st
-import os
-from dotenv import load_dotenv
 from openai import OpenAI
-import learning_tools
+from learning_tools import LearningTools
 from memory_manager import MemoryManager
 import json
 
-# Load environment variables from .env file
-load_dotenv()
+# ✅ Securely load API key from secrets.toml
+openai_client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# Read API key from environment
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-# Handle missing API key gracefully
-if not OPENAI_API_KEY or OPENAI_API_KEY.startswith("default_key"):
-    st.error("❌ OpenAI API key not found. Please ensure it's correctly set in your .env file.")
-    st.stop()
-
-# Initialize OpenAI client (requires openai>=1.0.0)
-try:
-    openai_client = OpenAI(api_key=OPENAI_API_KEY)
-except Exception as e:
-    st.error(f"❌ Failed to initialize OpenAI client: {e}")
-    st.stop()
-
-# You can now use openai_client to call the API like:
-# response = openai_client.chat.completions.create(...)
 
 # Initialize session state
 if "messages" not in st.session_state:
@@ -39,11 +20,8 @@ if "learning_profile" not in st.session_state:
     }
 if "memory_manager" not in st.session_state:
     st.session_state.memory_manager = MemoryManager()
-import learning_tools
-
 if "learning_tools" not in st.session_state:
-    st.session_state.learning_tools = learning_tools  # store the module itself
-
+    st.session_state.learning_tools = LearningTools(openai_client)
 
 def main():
     st.set_page_config(
@@ -186,7 +164,29 @@ def process_learning_query(query):
         return response.choices[0].message.content
         
     except Exception as e:
-        return f"I apologize, but I encountered an error while processing your question: {str(e)}. Please try rephrasing your question or check your connection."
+        error_msg = str(e)
+        if "insufficient_quota" in error_msg or "exceeded your current quota" in error_msg:
+            return """
+🚨 **OpenAI API Quota Exceeded**
+
+Your OpenAI API key has exceeded its usage quota. To continue using the AI Learning Coach:
+
+1. **Check your OpenAI account**: Visit https://platform.openai.com/usage
+2. **Add billing**: Go to https://platform.openai.com/settings/billing
+3. **Add credits**: Purchase credits or upgrade your plan
+4. **Free tier**: If using free tier, you may need to wait or upgrade
+
+The application will work normally once your quota is restored.
+"""
+        elif "rate_limit" in error_msg.lower():
+            return """
+⏱️ **Rate Limit Reached**
+
+Too many requests were made recently. Please wait a moment and try again.
+Your OpenAI API has temporary rate limiting active.
+"""
+        else:
+            return f"I encountered an error while processing your question: {error_msg}. Please check your OpenAI API configuration."
 
 def create_study_plan():
     """Generate a personalized study plan."""
@@ -230,7 +230,11 @@ def create_study_plan():
         })
         
     except Exception as e:
-        st.error(f"Error generating study plan: {str(e)}")
+        error_msg = str(e)
+        if "insufficient_quota" in error_msg or "exceeded your current quota" in error_msg:
+            st.error("🚨 OpenAI API quota exceeded. Please add credits to your OpenAI account at https://platform.openai.com/settings/billing")
+        else:
+            st.error(f"Error generating study plan: {error_msg}")
 
 def generate_quiz():
     """Generate a quiz based on preferred subjects."""
@@ -279,7 +283,11 @@ def generate_quiz():
         })
         
     except Exception as e:
-        st.error(f"Error generating quiz: {str(e)}")
+        error_msg = str(e)
+        if "insufficient_quota" in error_msg or "exceeded your current quota" in error_msg:
+            st.error("🚨 OpenAI API quota exceeded. Please add credits to your OpenAI account.")
+        else:
+            st.error(f"Error generating quiz: {error_msg}")
 
 def show_progress_report():
     """Show learning progress and insights."""
@@ -321,7 +329,11 @@ def show_progress_report():
         })
         
     except Exception as e:
-        st.error(f"Error generating progress report: {str(e)}")
+        error_msg = str(e)
+        if "insufficient_quota" in error_msg or "exceeded your current quota" in error_msg:
+            st.error("🚨 OpenAI API quota exceeded. Please add credits to your OpenAI account.")
+        else:
+            st.error(f"Error generating progress report: {error_msg}")
 
 def get_study_techniques():
     """Provide personalized study techniques."""
@@ -362,7 +374,11 @@ def get_study_techniques():
         })
         
     except Exception as e:
-        st.error(f"Error generating study techniques: {str(e)}")
+        error_msg = str(e)
+        if "insufficient_quota" in error_msg or "exceeded your current quota" in error_msg:
+            st.error("🚨 OpenAI API quota exceeded. Please add credits to your OpenAI account.")
+        else:
+            st.error(f"Error generating study techniques: {error_msg}")
 
 if __name__ == "__main__":
     main()
